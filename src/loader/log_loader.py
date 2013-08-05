@@ -14,7 +14,7 @@ logger.setLevel(logging.DEBUG)
 
 FORMAT = logging.Formatter('%(asctime)s %(name)s %(funcName)s %(lineno)d %(levelname)s: %(message)s')
 
-ch = logging.StreamHandler() # logging.FileHandler('loader.log')
+ch =logging.FileHandler('loader.log')   # logging.StreamHandler() #
 ch.setLevel(logging.DEBUG)
 ch.setFormatter(FORMAT)
 
@@ -176,7 +176,7 @@ class ServerLogFormatter(BaseLineFormatter):
         if data == '-':
             return ''
 
-        tmpData = urllib2.unquote(data)
+        tmpData = urllib2.unquote(data.replace('+', '%20'))
 
         cols = tmpData.split('&')
         #logger.debug('Data field looks like this: \n %s' % tmpData)
@@ -276,8 +276,8 @@ class LocalLogFormatter(BaseLineFormatter):
 
         return d
 
-        def __format_ua(self, ua):
-            return ua.split(':')[1]
+    def __format_ua(self, ua):
+        return ua.split(':')[1]
 
 
 class LocalDataFileLoader(BaseLogDataLoader):
@@ -312,7 +312,7 @@ class TestData(TestCase):
            ##configurations stored in config file
            ##last line of local log
 
-"""
+        """
         # use a directory called fixtures to store all test required files and data
 
         cls._fixtures = os.path.join(os.path.dirname(__file__), 'fixtures')
@@ -346,14 +346,16 @@ class TestData(TestCase):
         self.assertIsNotNone(full_data)
 
         length = len(full_data)
-        self.assertEqual(1, length, 'There should be one and one only data been found.')
-        self.assertEqual(self._data['data'], full_data[-1]['data']['s'], 'Local data should be the same as server json data')
+
+        server_json = full_data[0]['data']['s']
 
         logger.debug("Server json data:")
-        logger.debug(full_data[0]['data']['s'])
+        logger.debug(server_json)
         logger.debug("Formatted server json data:")
         logger.debug('\n' + json.dumps(json.loads(full_data[0]['data']['s'], encoding='utf8'), indent=4, separators=(',', ':')))
 
+        self.assertEqual(1, length, 'There should be one and one only data been found.')
+        self.assertEqual(self._data['data'], server_json, 'Local data should be the same as server json data')
 
     def __has_event(self, events, eventName):
         for e in events:
